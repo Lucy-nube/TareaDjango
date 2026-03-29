@@ -121,13 +121,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-import os
 
 # Esta es la ruta donde Django agrupará todos los estáticos para producción
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Opcional: Esto ayuda a que Django encuentre tus carpetas de estáticos locales
 STATICFILES_DIRS = [
-    BASE_DIR / "TareaDjango", 'static',
+    os.path.join(BASE_DIR, 'static'),
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
