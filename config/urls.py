@@ -19,9 +19,11 @@ from django.urls import path
 from django.shortcuts import redirect
 from boards import views
 from django.contrib.auth import views as auth_views
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')), # Esto habilita /accounts/login/
     # Si entras a la raíz, vas a la lista de tableros
     path('', lambda r: redirect('board_list')),
     path('boards/', views.board_list, name='board_list'),

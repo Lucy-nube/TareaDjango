@@ -104,8 +104,9 @@ AUTH_PASSWORD_VALIDATORS = [
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
-LOGIN_REDIRECT_URL = 'board_list'  
-LOGOUT_REDIRECT_URL = 'login' 
+LOGIN_REDIRECT_URL = '/boards/'
+LOGOUT_REDIRECT_URL = '/boards/'
+ 
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
