@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- DEBUG: Si ves esto, el archivo se cargó correctamente -->
+<div class="mb-8">
+    <a href="{% url 'board_list' %}" class="text-indigo-400 text-xs font-bold uppercase tracking-widest hover:text-indigo-300">← Volver a Proyectos</a>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
+        <h1 class="text-3xl font-bold text-white">{{ board.title }}</h1>
+        
+        <form method="POST" action="{% url 'create_column' board.id %}" class="flex gap-2">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Nueva columna..." required
+                   class="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 w-48">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all">
+                + Columna
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Contenedor Kanban -->
+<div class="flex gap-6 overflow-x-auto pb-6 custom-scrollbar items-start">
+    {% for column in columns %}
+    <div class="min-w-[300px] max-w-[300px] bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-col shadow-2xl">
+        
+        <div class="flex justify-between items-center mb-5 px-1">
+            <h2 class="text-sm font-black text-slate-400 uppercase tracking-tighter">{{ column.title }}</h2>
+            <span class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">{{ column.tasks.count }}</span>
+        </div>
+
+        <!-- Tareas -->
+        <div class="space-y-3 mb-4">
+            {% for task in column.tasks.all %}
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-md group relative">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-2 h-2 rounded-full {% if task.priority == 'H' %}bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]{% elif task.priority == 'M' %}bg-amber-400{% else %}bg-emerald-400{% endif %}"></span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">{{ task.get_priority_display }}</span>
+                </div>
+                <p class="text-sm text-slate-200 font-medium">{{ task.title }}</p>
+                <div class="mt-4 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a href="{% url 'delete_task' task.pk %}" class="text-[10px] text-rose-500 font-bold hover:underline">ELIMINAR</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Formulario Tarea -->
+        <form method="POST" action="{% url 'create_task' %}">
+            {% csrf_token %}
+            <input type="hidden" name="column_id" value="{{ column.id }}">
+            <input type="hidden" name="board_id" value="{{ board.id }}">
+            <input type="text" name="title" placeholder="+ Nueva tarea..." required
+                class="w-full bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-xl p-3 text-xs text-slate-500 hover:border-slate-700 focus:border-indigo-500 outline-none transition-all">
+        </form>
+    </div>
+    {% empty %}
+    <div class="text-center py-10 w-full">
+        <p class="text-slate-600 italic">Crea una columna para empezar a organizar este tablero.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { height: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 2px solid #0f172a; }
+</style>
+{% endblock %}

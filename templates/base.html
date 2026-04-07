@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Pro</title>
+    <!-- ENLACE CORREGIDO: Ahora sí cargará el diseño oscuro -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos de respaldo por si el navegador tarda en cargar el script */
+        body { 
+            background-color: #0f172a !important; 
+            color: #e2e8f0 !important; 
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen">
+    <nav class="border-b border-slate-800 p-4 bg-slate-900/50 backdrop-blur-md sticky top-0">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'board_list' %}" class="font-extrabold text-indigo-500 text-2xl tracking-tighter">TASKFLOW</a>
+            <div class="flex items-center gap-4">
+                {% if user.is_authenticated %}
+                    <span class="text-slate-400 text-sm italic">{{ user.username }}</span>
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-xs text-rose-500 font-bold uppercase hover:text-rose-400 transition-colors">Salir</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-sm text-indigo-400 font-bold">Entrar</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-8">
+        {% block content %}
+        <!-- Aquí se inyectará el contenido de index.html y board_detail.html -->
+        {% endblock %}
+    </main>
+</body>
+</html>
