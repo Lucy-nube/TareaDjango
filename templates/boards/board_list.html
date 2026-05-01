@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Tableros | GestorPro{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-10">
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold">Mis Tableros</h2>
+        <button onclick="toggleModal('board-modal', true)"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+            + Nuevo tablero
+        </button>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="boards-grid">
+        {% for board in boards %}
+        <div class="p-6 bg-[#161b22] border border-[#30363d] rounded-xl hover:border-blue-500 transition-all" id="board-card-{{ board.id }}">
+            
+            <!-- ENLACE CORREGIDO: Lleva al detalle del tablero para gestionar columnas -->
+            <a href="{% url 'board_detail' board.id %}" class="block group">
+                <h3 class="text-xl font-semibold mb-2 group-hover:text-blue-400 board-title">
+                    {{ board.title }}
+                </h3>
+                <p class="text-sm text-gray-500">{{ board.columns.count }} columnas activas</p>
+            </a>
+
+            <div class="flex gap-2 mt-4">
+                <button onclick="openEditModal('{{ board.id }}', '{{ board.title }}')"
+                   class="text-sm px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-white transition">
+                   Editar
+                </button>
+                <button onclick="deleteBoardSPA('{{ board.id }}')"
+                        class="text-sm px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white transition">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <p id="empty-message" class="text-gray-500 col-span-full">No tienes tableros. Crea uno con el botón superior.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- MODAL PERSONALIZADO -->
+<div id="board-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-[#161b22] border border-[#30363d] p-8 rounded-xl w-full max-w-md shadow-2xl">
+        <h3 id="modal-title" class="text-xl font-bold mb-4 text-white">Nuevo Tablero</h3>
+        <input type="hidden" id="edit-board-id">
+        <input type="text" id="board-name-input" 
+               class="w-full bg-[#0d1117] border border-[#30363d] p-3 rounded-lg mb-6 outline-none focus:border-blue-500 text-white transition-all"
+               placeholder="Escribe el nombre...">
+        
+        <div class="flex justify-end gap-3">
+            <button onclick="toggleModal('board-modal', false)" class="px-4 py-2 text-gray-400 hover:text-white transition">Cancelar</button>
+            <button onclick="saveBoard()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-white transition">Guardar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        modal.classList.toggle('hidden', !show);
+        modal.classList.toggle('flex', show);
+        if(show) {
+            document.getElementById('board-name-input').focus();
+        } else {
+            // Resetear el modal al cerrar
+            document.getElementById('modal-title').innerText = "Nuevo Tablero";
+            document.getElementById('edit-board-id').value = "";
+            document.getElementById('board-name-input').value = "";
+        }
+    }
+
+    function openEditModal(id, title) {
+        document.getElementById('modal-title').innerText = "Editar Tablero";
+        document.getElementById('edit-board-id').value = id;
+        document.getElementById('board-name-input').value = title;
+        toggleModal('board-modal', true);
+    }
+
+    async function saveBoard() {
+        const id = document.getElementById('edit-board-id').value;
+        const title = document.getElementById('board-name-input').value;
+        if (!title) return;
+
+        // Construir la URL dinámicamente según sea edición o creación
+        const url = id ? `/board/update/${id}/` : "{% url 'create_board' %}";
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ title })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload(); 
+        }
+    }
+
+    async function deleteBoardSPA(id) {
+        if (!confirm("¿Eliminar este tablero permanentemente?")) return;
+        const response = await fetch(`/board/delete/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        if (response.ok) {
+            const card = document.getElementById(`board-card-${id}`);
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 300);
+        }
+    }
+</script>
+{% endblock %}
