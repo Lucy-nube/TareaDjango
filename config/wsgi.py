@@ -1,7 +1,7 @@
 import os
 from django.core.wsgi import get_wsgi_application
 
-# CORRECCIÓN: Ahora apunta a tu carpeta real 'config'
+# CORRECCIÓN: Ahora apunta correctamente a la carpeta 'config'
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
@@ -11,6 +11,7 @@ try:
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
+    # Credenciales para tu panel
     username = "admin"
     email = "admin@ejemplo.com"
     password = "TuPasswordSegura123" 
@@ -21,6 +22,5 @@ try:
     else:
         print(f"ℹ️ El superusuario '{username}' ya existe")
 except Exception as e:
-    # Nota: Es normal que esto imprima un error durante el 'build', 
-    # lo importante es que funcione cuando Gunicorn arranque.
+    # Es normal ver una nota aquí durante el despliegue inicial
     print(f"ℹ️ Nota sobre superusuario: {e}")
