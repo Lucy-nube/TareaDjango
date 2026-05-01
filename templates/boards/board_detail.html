@@ -54,7 +54,6 @@
                 <div class="task-card bg-[#0d1117] border border-[#30363d] p-3 rounded-xl text-sm text-gray-300 flex justify-between items-center group hover:border-gray-500 transition-colors">
                     <div class="flex flex-col">
                         <span class="task-title font-medium">{{ task.title }}</span>
-                        <!-- VISUALIZACIÓN DE LA FECHA -->
                         {% if task.due_date %}
                         <span class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
                             <svg xmlns="http://w3.org" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,30 +77,26 @@
     </div>
 </div>
 
-<!-- MODAL TAREA (ACTUALIZADO CON FECHA) -->
+<!-- MODALES -->
 <div id="task-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-md">
     <div class="bg-[#161b22] border border-[#30363d] p-8 rounded-2xl w-full max-w-sm">
         <h3 class="text-2xl font-bold mb-6 text-white">Nueva Tarea</h3>
         <input type="hidden" id="task-col-id">
-        
         <div class="mb-4">
-            <label class="text-gray-400 text-xs mb-2 block font-semibold uppercase tracking-wider">Título</label>
-            <input type="text" id="task-title-input" class="w-full bg-[#0d1117] border border-[#30363d] p-3 rounded-xl text-white outline-none focus:border-blue-500" placeholder="¿Qué hay que hacer?">
+            <label class="text-gray-400 text-xs mb-2 block uppercase">Título</label>
+            <input type="text" id="task-title-input" class="w-full bg-[#0d1117] border border-[#30363d] p-3 rounded-xl text-white outline-none focus:border-blue-500" placeholder="¿Qué hacer?">
         </div>
-
         <div class="mb-6">
-            <label class="text-gray-400 text-xs mb-2 block font-semibold uppercase tracking-wider">Fecha límite</label>
-            <input type="date" id="task-date-input" class="w-full bg-[#0d1117] border border-[#30363d] p-3 rounded-xl text-white outline-none focus:border-blue-500 color-scheme-dark">
+            <label class="text-gray-400 text-xs mb-2 block uppercase">Fecha límite</label>
+            <input type="date" id="task-date-input" class="w-full bg-[#0d1117] border border-[#30363d] p-3 rounded-xl text-white outline-none focus:border-blue-500 [color-scheme:dark]">
         </div>
-
         <div class="flex justify-end gap-3">
-            <button onclick="toggleModal('task-modal', false)" class="px-4 py-2 text-gray-400 hover:text-white transition">Cancelar</button>
-            <button onclick="saveTaskSPA()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl font-bold text-white transition-all">Guardar Tarea</button>
+            <button onclick="toggleModal('task-modal', false)" class="px-4 py-2 text-gray-400">Cancelar</button>
+            <button onclick="saveTaskSPA()" class="bg-blue-600 px-6 py-2 rounded-xl font-bold text-white">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- MODAL COLUMNA -->
 <div id="col-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-md">
     <div class="bg-[#161b22] border border-[#30363d] p-8 rounded-2xl w-full max-w-sm">
         <h3 class="text-2xl font-bold mb-6 text-white">Nueva Columna</h3>
@@ -113,10 +108,16 @@
     </div>
 </div>
 
-<style>
-    /* Estilo para que el selector de fecha se vea bien en tema oscuro */
-    .color-scheme-dark { color-scheme: dark; }
-</style>
+<div id="confirm-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] backdrop-blur-sm">
+    <div class="bg-[#161b22] border border-red-900/30 p-8 rounded-2xl w-full max-w-xs text-center">
+        <h3 class="text-xl font-bold text-white mb-2">¿Eliminar columna?</h3>
+        <p class="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
+        <div class="flex flex-col gap-2">
+            <button id="btn-confirm-delete" class="bg-red-600 text-white py-2 rounded-xl font-bold">Sí, eliminar</button>
+            <button onclick="toggleModal('confirm-modal', false)" class="text-gray-400 py-2">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -124,19 +125,15 @@
 <script>
     function toggleModal(id, show) {
         const m = document.getElementById(id);
+        if(!m) return;
         m.classList.toggle('hidden', !show);
         m.classList.toggle('flex', show);
-        if(!show) {
-            // Limpiar inputs al cerrar
-            if(id === 'task-modal') {
-                document.getElementById('task-title-input').value = '';
-                document.getElementById('task-date-input').value = '';
-            }
-        }
     }
 
     function openTaskModal(columnId) {
         document.getElementById('task-col-id').value = columnId;
+        document.getElementById('task-title-input').value = '';
+        document.getElementById('task-date-input').value = '';
         toggleModal('task-modal', true);
     }
 
@@ -145,34 +142,80 @@
         const columnId = document.getElementById('task-col-id').value;
         const dueDate = document.getElementById('task-date-input').value;
 
-        if(!title) {
-            alert("El título es obligatorio");
-            return;
-        }
+        if(!title) return alert("Título requerido");
 
         const formData = new FormData();
         formData.append('title', title);
         formData.append('column_id', columnId);
-        formData.append('due_date', dueDate); // Aquí enviamos la fecha al servidor
+        formData.append('due_date', dueDate);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-        try {
-            const response = await fetch("{% url 'create_task' %}", {
+        const response = await fetch("{% url 'create_task' %}", {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if(response.ok) location.reload();
+    }
+
+    async function deleteTaskSPA(taskId, button) {
+        if(!confirm("¿Borrar tarea?")) return;
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        const response = await fetch(`/tasks/delete/${taskId}/`, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if(response.ok) button.closest('.task-card').remove();
+    }
+
+    async function saveColumnSPA() {
+        const title = document.getElementById('col-name-input').value;
+        if(!title) return;
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        const response = await fetch("/boards/{{ board.id }}/columns/create/", {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if(response.ok) location.reload();
+    }
+
+    async function updateColumnTitle(columnId, newTitle) {
+        const formData = new FormData();
+        formData.append('title', newTitle);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        await fetch(`/columns/update/${columnId}/`, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+    }
+
+    function confirmDeleteColumn(columnId) {
+        toggleModal('confirm-modal', true);
+        document.getElementById('btn-confirm-delete').onclick = async () => {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            await fetch(`/columns/delete/${columnId}/`, {
                 method: 'POST',
                 body: formData,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-
-            if(response.ok) {
-                location.reload(); // Recargamos para ver la nueva tarea con su fecha
-            } else {
-                console.error("Error al guardar la tarea");
-            }
-        } catch (error) {
-            console.error("Error de red:", error);
-        }
+            location.reload();
+        };
     }
 
-    // El resto de tus funciones (saveColumnSPA, updateColumnTitle, etc.) irían aquí debajo...
+    document.getElementById('task-search').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.task-card').forEach(card => {
+            const title = card.querySelector('.task-title').textContent.toLowerCase();
+            card.style.display = title.includes(term) ? 'flex' : 'none';
+        });
+    });
 </script>
 {% endblock %}
