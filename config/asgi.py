@@ -1,12 +1,12 @@
 import os
 from django.core.wsgi import get_wsgi_application
 
-# Aquí DEBE decir 'config.settings' porque tu carpeta se llama config
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
 
-# --- BLOQUE PARA CREAR EL ADMIN ---
+
 try:
     from django.contrib.auth import get_user_model
     User = get_user_model()

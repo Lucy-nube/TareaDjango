@@ -93,7 +93,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Esto permite que WhiteNoise comprima y guarde en caché los archivos estáticos
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Carpetas extra donde Django busca estáticos (ej: /static/ en la raíz)
 STATICFILES_DIRS = [
