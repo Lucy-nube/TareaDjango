@@ -1,16 +1,17 @@
-"""
-ASGI config for config project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
-"""
-
 import os
+from django.core.wsgi import get_wsgi_application
 
-from django.core.asgi import get_asgi_application
-
+# Aquí DEBE decir 'config.settings' porque tu carpeta se llama config
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-application = get_asgi_application()
+application = get_wsgi_application()
+
+# --- BLOQUE PARA CREAR EL ADMIN ---
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    if not User.objects.filter(username="admin").exists():
+        User.objects.create_superuser("admin", "admin@admin.com", "TuPassword123")
+        print("✅ Superusuario 'admin' creado exitosamente")
+except Exception as e:
+    print(f"ℹ️ Nota sobre el admin: {e}")
